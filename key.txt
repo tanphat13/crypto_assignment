@@ -1,0 +1,1 @@
+{"horizontal_step": 6, "vertical_step": 124, "end_origin": [248, 258]}
