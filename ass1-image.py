@@ -1,10 +1,12 @@
 import cv2
+from PIL import Image
+import numpy as np
 import math
 import random
 import json
 
 file_path = './'
-file_name = 'image1.png'
+file_name = 'image.png'
 raw_file = file_path + '/' + file_name
 text = 'NguyenHoangLong-NguyenNgocAnhTuan-CuTanPhat'
 number_student = text.count('-', 0, -1)
@@ -14,9 +16,12 @@ for index in range(len(cipher)):
 	if len(cipher[index]) < 7:
 		cipher[index] = cipher[index].zfill(7)
 cipher = ''.join(cipher[x] for x in range(len(cipher)))
-img = cv2.imread(raw_file)
-height, width, channel = img.shape
-output = img.copy()
+img = Image.open(raw_file)
+icc_profile = img.info.get("icc_profile")
+exif = img.info.get("exif")
+img_as_array = np.asarray(img).astype(np.uint8)
+height, width, channel = img_as_array.shape
+output = img_as_array.copy()
 number_lines = 1
 if len(cipher) > width:
 	number_lines = math.ceil(len(cipher)/width)
@@ -42,9 +47,13 @@ while j < number_lines:
 		i += 1
 	j += 1
 
+output  = Image.fromarray(np.uint8(output))
+
+output = output.save('img-out.png', mode='PNG', icc_profile=icc_profile, exif=exif)
+output = Image.open('img-out.jpeg')
 end_origin.append(int((j-1)*vstep))
 end_origin.append(int(i*hstep))
-cv2.imwrite("img-out.png", output)
+
 key = open('./key.txt', "w")
 data = {'lines': number_lines, 'vstep': vstep, 'hstep': hstep, 'end_origin': end_origin,'initial_value': initial_value}
 json.dump(data, key, indent = 4)
