@@ -19,7 +19,9 @@ cipher = ''.join(cipher[x] for x in range(len(cipher)))
 img = Image.open(raw_file)
 icc_profile = img.info.get("icc_profile")
 exif = img.info.get("exif")
-img_as_array = np.asarray(img).astype(np.uint8)
+img.save('image.png', mode='PNG', icc_profile=icc_profile, exif=exif)
+new_img = Image.open('image.png')
+img_as_array = np.asarray(new_img).astype(np.uint8)
 height, width, channel = img_as_array.shape
 output = img_as_array.copy()
 number_lines = 1
@@ -49,15 +51,10 @@ while j < number_lines:
 
 output  = Image.fromarray(np.uint8(output))
 
-output = output.save('img-out.png', mode='PNG', icc_profile=icc_profile, exif=exif)
-output = Image.open('img-out.jpeg')
+output.save('img-out.png', mode='PNG', icc_profile=icc_profile, exif=exif)
 end_origin.append(int((j-1)*vstep))
 end_origin.append(int(i*hstep))
 
 key = open('./key.txt', "w")
 data = {'lines': number_lines, 'vstep': vstep, 'hstep': hstep, 'end_origin': end_origin,'initial_value': initial_value}
 json.dump(data, key, indent = 4)
-
-###---Int to ASCII character
-# for i in range (0, len(cipher)):
-#     print(chr(int(cipher[i])))
