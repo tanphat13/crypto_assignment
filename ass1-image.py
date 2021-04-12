@@ -4,12 +4,20 @@ import numpy as np
 import math
 import random
 import json
+import crypto.Cipher._XOR as xor
+import sys
+import warnings
 
+if not sys.warnoptions:
+	warnings.simplefilter("ignore")
+
+sym_key = str(random.randrange(0, 9))
+info = sym_key
+xor_algo =  xor.new(sym_key)
 file_path = './'
 file_name = 'image.png'
 raw_file = file_path + '/' + file_name
 text = 'NguyenHoangLong-NguyenNgocAnhTuan-CuTanPhat'
-number_student = text.count('-', 0, -1)
 cipher = ' '.join(format(ord(x), 'b') for x in text)
 cipher = cipher.split(" ")
 for index in range(len(cipher)):
@@ -20,8 +28,7 @@ img = Image.open(raw_file)
 icc_profile = img.info.get("icc_profile")
 exif = img.info.get("exif")
 img.save('image.png', mode='PNG', icc_profile=icc_profile, exif=exif)
-new_img = Image.open('image.png')
-img_as_array = np.asarray(new_img).astype(np.uint8)
+img_as_array = np.asarray(img).astype(np.uint8)
 height, width, channel = img_as_array.shape
 output = img_as_array.copy()
 number_lines = 1
@@ -30,21 +37,23 @@ if len(cipher) > width:
 bits_per_line = math.ceil(len(cipher)/number_lines)
 hstep = math.floor(width/bits_per_line)
 vstep = int(random.randrange(1, int(height/number_lines)))
-end_origin = []
-initial_value = [[] for i in range(number_lines)]
+info += "&" + xor_algo.encrypt(str(number_lines)).decode() + "&" + xor_algo.encrypt(str(vstep)).decode() + "&" + xor_algo.encrypt(str(hstep)).decode() + "&" + xor_algo.encrypt(str(bits_per_line)).decode() 
+
 j = 0
-i = 0
 count = 0
+i = 0
+initial_value_as_str = ''
+
 while j < number_lines:
 	i = 0
 	while i < bits_per_line:
 		if count == len(cipher):
 			break
-		initial_value[j].append(int(output[j*vstep][i*hstep][0]))
-		if output[j*vstep][i*hstep][0] + math.pow(2, int(cipher[i])) > 255:
-			output[j*vstep][i*hstep][0] -= math.pow(2, int(cipher[i]))
+		initial_value_as_str +=  "&" + xor_algo.encrypt(str(output[j*vstep][i*hstep][0])).decode()
+		if output[j*vstep][i*hstep][0] == 255:
+			output[j*vstep][i*hstep][0] -= int(cipher[i])
 		else:
-			output[j*vstep][i*hstep][0] += math.pow(2, int(cipher[i]))
+			output[j*vstep][i*hstep][0] += int(cipher[i])
 		count += 1
 		i += 1
 	j += 1
@@ -52,9 +61,7 @@ while j < number_lines:
 output  = Image.fromarray(np.uint8(output))
 
 output.save('img-out.png', mode='PNG', icc_profile=icc_profile, exif=exif)
-end_origin.append(int((j-1)*vstep))
-end_origin.append(int(i*hstep))
+info += "&" + (xor_algo.encrypt(str((j-1)*vstep)).decode()) + "&" + (xor_algo.encrypt(str((i*hstep))).decode()) +  initial_value_as_str
 
 key = open('./key.txt', "w")
-data = {'lines': number_lines, 'vstep': vstep, 'hstep': hstep, 'end_origin': end_origin,'initial_value': initial_value}
-json.dump(data, key, indent = 4)
+key.write(info)

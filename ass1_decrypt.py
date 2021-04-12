@@ -3,32 +3,43 @@ from PIL import Image
 import numpy as np
 import math
 import json
+from crypto.Cipher import _XOR as xor
+import sys
+import warnings
+
+if not sys.warnoptions:
+	warnings.simplefilter("ignore")
 
 key_file = open('key.txt', 'r')
-data = json.load(key_file)
+data = key_file.read()#json.load(key_file)
+sym_key, lines, vstep, hstep, bits_per_line, end_origin_0, end_origin_1, initial_value_as_str = data.split('&', 7)
+xor_algo = xor.new(sym_key)
+
+def decrypt_key(cipher):
+	value = xor_algo.decrypt(cipher).decode()
+	return int(value)
+
 
 # img = cv2.imread('./img-out.png')
 img = np.asarray(Image.open('./img-out.png')).astype(np.uint8)
 height, width, channel = img.shape
-number_lines = data['lines']
-vstep = data['vstep']
-hstep = data['hstep']
-end_origin = data['end_origin']
-initial_value = data['initial_value']
-
+number_lines = decrypt_key(lines.encode())
+vstep = decrypt_key(vstep.encode())
+hstep = decrypt_key(hstep.encode())
+end_origin = [decrypt_key(end_origin_0.encode()), decrypt_key(end_origin_1.encode())]
+bits_per_line =  decrypt_key(bits_per_line.encode())
+initial_value = initial_value_as_str.split('&')
 cipher = []
 j = 0
 count = 0
-
-while j < number_lines:
-	if j*vstep == end_origin[0] and count*hstep == end_origin[1]:
-		break
-	for i in range(len(initial_value[j])):
-		count = i
-		cipher.append(str(int(math.log2(abs(img[j*vstep][i*hstep][0] - initial_value[j][i])))))
+while count < len(initial_value):
+	for i in range(bits_per_line):
+		if count == len(initial_value):
+			break
+		cipher.append(str(int(abs(img[j*vstep][i*hstep][0] - decrypt_key(initial_value[count].encode())))))
+		count +=  1
 	j += 1
-
 array = [cipher[i:(i+7)] for i in range(0, len(cipher), 7)]
 raw_bin = [''.join(array[i]) for i in range(len(array))]
 raw_code = [int(raw_bin[i], 2) for i in range(len(raw_bin))]
-print(''.join(chr(x) for x in raw_code))
+print(''.join([chr(x) for x in raw_code]))
