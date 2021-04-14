@@ -28,15 +28,12 @@ vstep = decrypt_key(vstep.encode())
 hstep = decrypt_key(hstep.encode())
 bits_per_line =  decrypt_key(bits_per_line.encode())
 message_len = decrypt_key(message_len.encode())
-
 cipher = []
-count = 0
+
 for j in range(number_lines):
 	initial_value = initial_value_as_str[j].split('&')
 	for i in range(len(initial_value)):
-		#print("%d %d" % (count, int(abs(img[j*vstep][i*hstep][0] - decrypt_key(initial_value[i])))))
 		cipher.append(str(int(abs(img[j*vstep][i*hstep][0] - decrypt_key(initial_value[i])))))
-		count += 1
 array = [cipher[i:(i+7)] for i in range(0, len(cipher), 7)]
 raw_bin = [''.join(array[i]) for i in range(len(array))]
 raw_code = [int(raw_bin[i], 2) for i in range(len(raw_bin))]
