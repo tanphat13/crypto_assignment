@@ -15,21 +15,24 @@ sym_key = str(random.randrange(0, 3))
 info = sym_key
 xor_algo =  xor.new(sym_key)
 file_path = '.'
-file_name = 'image.png'
+file_name = input("Please input the file name: ")
 raw_file = file_path + '/' + file_name
-text = 'NguyenHoangLong-NguyenNgocAnhTuan-CuTanPhat'
+text = input("Please input message: ") #'NguyenHoangLong-NguyenNgocAnhTuan-CuTanPhat'
+file_out = input("Please input the name for output file: ")
 cipher = ' '.join(format(ord(x), 'b') for x in text)
 cipher = cipher.split(" ")
 for index in range(len(cipher)):
 	if len(cipher[index]) < 7:
 		cipher[index] = cipher[index].zfill(7)
 cipher = ''.join(cipher[x] for x in range(len(cipher)))
+
 img = Image.open(raw_file)
 icc_profile = img.info.get("icc_profile")
 exif = img.info.get("exif")
-img.save('image.png', mode='PNG', icc_profile=icc_profile, exif=exif)
+img.save(file_name, mode='PNG', icc_profile=icc_profile, exif=exif)
 output = np.asarray(Image.open(raw_file)).astype(np.uint8)
 height, width, channel = output.shape
+
 number_lines = 1
 if len(cipher) > width:
 	number_lines = math.ceil(len(cipher)/width)
@@ -46,7 +49,6 @@ while j < number_lines:
 	info += ","
 	while i < bits_per_line:
 		info +=  xor_algo.encrypt(str(output[j*vstep][i*hstep][0])).decode()
-		current= (output[j*vstep][i*hstep][0])
 		if output[j*vstep][i*hstep][0] == 255:
 			output[j*vstep][i*hstep][0] -= int(cipher[count])
 		else:
@@ -59,6 +61,6 @@ while j < number_lines:
 	j += 1
 
 output  = Image.fromarray(np.uint8(output))
-output.save('img-out.png', mode='PNG', icc_profile=icc_profile, exif=exif)
+output.save(file_out, mode='PNG', icc_profile=icc_profile, exif=exif)
 key = open('./key.txt', "w")
 key.write(info)

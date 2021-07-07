@@ -3,7 +3,8 @@ from PIL import Image
 import numpy as np
 import math
 import json
-from crypto.Cipher import _XOR as xor
+from crypto.Cipher import _XOR as xor # if you used Ubuntu, please comment this line and uncomment next line
+# from Crypto.Cipher import _XOR as xor
 import sys
 import warnings
 
@@ -21,8 +22,8 @@ def decrypt_key(cipher):
 	value = xor_algo.decrypt(cipher).decode()
 	return int(value)
 
-# img = cv2.imread('./img-out.png')
-img = np.asarray(Image.open('./img-out.png')).astype(np.uint8)
+file_in = input("Please input file to get the message: ")
+img = np.asarray(Image.open(file_in)).astype(np.uint8)
 number_lines = decrypt_key(lines.encode())
 vstep = decrypt_key(vstep.encode())
 hstep = decrypt_key(hstep.encode())
